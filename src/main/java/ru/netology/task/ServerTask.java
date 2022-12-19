@@ -1,18 +1,22 @@
 package ru.netology.task;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
 import ru.netology.handler.Handler;
 import ru.netology.model.Metadata;
 import ru.netology.model.Request;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class ServerTask implements Runnable {
@@ -43,7 +47,6 @@ public class ServerTask implements Runnable {
             final var requestLine = in.readLine();
             final var parts = requestLine.split(" ");
 
-
             log.info("Received: {} from client: {}", requestLine, clientAddress);
             if (parts.length != 3) {
                 // just close socket
@@ -52,7 +55,12 @@ public class ServerTask implements Runnable {
             }
 
             final var method = parts[0];
-            final var path = parts[1];
+            final var fullPath = parts[1];
+            int endIndex = fullPath.indexOf("?");
+            final var path = fullPath.substring(0, endIndex);
+            var queries = URLEncodedUtils.parse(fullPath.substring(endIndex + 1),
+                    StandardCharsets.UTF_8);
+
             final var headers = new HashMap<String, String>();
             //code to read and print headers
             String headerLine = null;
@@ -91,6 +99,12 @@ public class ServerTask implements Runnable {
                 }
                 if (body != null) {
                     requestBuilder.body(body);
+                }
+                if (!queries.isEmpty()) {
+                    Map<String, String> queryParams = queries.stream()
+                            .collect(Collectors.toMap(NameValuePair::getName, NameValuePair::getValue,
+                                    (o1, o2) -> o1));
+                    requestBuilder.queryParams(queryParams);
                 }
                 handler.handle(requestBuilder.build(), out);
             }

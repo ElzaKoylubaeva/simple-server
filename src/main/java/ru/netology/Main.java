@@ -18,6 +18,7 @@ public class Main {
         server.addHandler("GET", "/messages", new Handler() {
             @Override
             public void handle(Request request, BufferedOutputStream responseStream) throws IOException {
+                log.info("Request: {}", request);
                 String msg = "Message: " + request.getMethod() + " " + request.getPath();
                 responseStream.write(msg.getBytes());
                 responseStream.flush();
@@ -26,6 +27,7 @@ public class Main {
 
         server.addHandler("POST", "/messages", new Handler() {
             public void handle(Request request, BufferedOutputStream responseStream) throws IOException {
+                log.info("Request: {}", request);
                 String msg = "Message: " + request.getMethod() + " " + request.getPath();
                 responseStream.write(msg.getBytes());
                 responseStream.flush();
